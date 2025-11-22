@@ -1,3 +1,4 @@
+// Package config handles environment-based configuration loading with sensible defaults
 package config
 
 import (
@@ -22,7 +23,7 @@ type Config struct {
 	RateLimitRequests int
 	RateLimitWindow   time.Duration
 
-	// CORS
+	// CORS TODO: to be removed
 	//AllowedOrigins []string
 
 	// Storage (for future database integration)
@@ -41,7 +42,7 @@ func Load() *Config {
 		JWTSecret:         getEnv("JWT_SECRET", "change-me-in-production"), // TODO: enforce stronger secret in prod
 		RateLimitRequests: getIntEnv("RATE_LIMIT_REQUESTS", 100),
 		RateLimitWindow:   getDurationEnv("RATE_LIMIT_WINDOW", 1*time.Minute),
-		//AllowedOrigins:    []string{getEnv("ALLOWED_ORIGINS", "*")},
+		//AllowedOrigins:    []string{getEnv("ALLOWED_ORIGINS", "*")},	TODO: to be removed
 		StorageType: getEnv("STORAGE_TYPE", "memory"),
 		DatabaseURL: getEnv("DATABASE_URL", ""), // Persistence not implemented yet
 	}
