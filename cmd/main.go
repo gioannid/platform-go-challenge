@@ -1,3 +1,6 @@
+// Package main implements the entry point for the GlobalWebIndex Engineering Challenge application.
+// It sets up configuration, initializes dependencies, and starts the HTTP server by default listening to port 8080
+// with graceful shutdown.
 package main
 
 import (
