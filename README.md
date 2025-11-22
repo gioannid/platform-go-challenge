@@ -1,6 +1,22 @@
-# GWI Platform Go Challenge - Best Practices Implementation
+# GWI Platform Go Challenge
 
 A production-ready REST API for managing user favourites with clean architecture, optional authentication, and extensible storage.
+
+## Requirements
+
+Let's say that in GWI platform all of our users have access to a huge list of assets. We want our users to have a peronal list of favourites, meaning assets that favourite or “star” so that they have them in their frontpage dashboard for quick access. An asset can be one the following
+* Chart (that has a small title, axes titles and data)
+* Insight (a small piece of text that provides some insight into a topic, e.g. "40% of millenials spend more than 3hours on social media daily")
+* Audience (which is a series of characteristics, for that exercise lets focus on gender (Male, Female), birth country, age groups, hours spent daily on social media, number of purchases last month)
+e.g. Males from 24-35 that spent more than 3 hours on social media daily.
+
+Build a web server which has some endpoint to receive a user id and return a list of all the user’s favourites. Also we want endpoints that would add an asset to favourites, remove it, or edit its description. Assets obviously can share some common attributes (like their description) but they also have completely different structure and data. It’s up to you to decide the structure and we are not looking for something overly complex here (especially for the cases of audiences). There is no need to have/deploy/create an actual database although we would like to discuss about storage options and data representations.
+
+Note that users have no limit on how many assets they want on their favourites so your service will need to provide a reasonable response time.
+
+A working server application with functional API is required, along with a clear readme.md. Useful and passing tests would be also be viewed favourably
+
+It is appreciated, though not required, if a Dockerfile is included.
 
 ## Features
 
@@ -13,9 +29,10 @@ A production-ready REST API for managing user favourites with clean architecture
 - **Comprehensive Testing**: Unit and integration tests ***(TODO)***
 - **Docker Support**: Dockerfile and docker-compose included ***(TODO)***
 
-## Quick Start
+## Installation and Usage
 
 ### Using Docker (Recommended)
+***(TODO)***
 
 ### Manual Installation
 
@@ -87,3 +104,38 @@ You can now access the application's endpoints using a tool like `curl` or Postm
 ```bash
 curl http://localhost:8080/healthz
 ```
+### Running Tests
+
+To ensure the application's correctness and maintainability, various tests have been implemented. You can run them using the following commands:
+
+*   **Run all tests (unit and integration):**
+    ```bash
+    go test -v ./...
+    ```
+
+*   **Run only unit tests:**
+    ```bash
+    go test -v ./internal/domain/... ./internal/repository/... ./internal/service/... ./internal/handler/...
+    ```
+
+*   **Run only integration tests:**
+    ```bash
+    go test -v ./test/integration/...
+    ```
+
+*   **Run tests with coverage report:**
+    ```bash
+    go test -v -coverprofile=coverage.out ./...
+    go tool cover -html=coverage.out -o coverage.html
+    ```
+    This will generate an HTML coverage report that you can view in your browser.
+
+*   **Run benchmarks:**
+    ```bash
+    go test -bench=. -benchmem ./...
+    ```
+
+*   **Clean test cache:**
+    ```bash
+    go clean -testcache
+    ```

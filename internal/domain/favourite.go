@@ -3,6 +3,7 @@ package domain
 import (
 	"time"
 
+	"github.com/gioannid/platform-go-challenge/internal/config"
 	"github.com/google/uuid"
 )
 
@@ -35,9 +36,10 @@ type PageQuery struct {
 
 // NewPageQuery creates a PageQuery with defaults
 func NewPageQuery(limit, offset int, sortBy, order string) *PageQuery {
+	cfg := config.Get()
 	// Apply defaults
-	if limit <= 0 || limit > 1000 {
-		limit = 100
+	if limit <= 0 || limit > cfg.MaxPageItems {
+		limit = cfg.MaxPageItems
 	}
 	if offset < 0 {
 		offset = 0

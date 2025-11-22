@@ -190,3 +190,20 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 
 	respondSuccess(w, http.StatusCreated, asset, "Asset created successfully")
 }
+
+// DeleteAsset handles DELETE /assets/{assetId}
+func (h *Handler) DeleteAsset(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	assetID, err := uuid.Parse(vars["assetId"])
+	if err != nil {
+		respondError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	if err := h.service.DeleteAsset(r.Context(), assetID); err != nil {
+		respondError(w, mapDomainError(err), err)
+		return
+	}
+
+	respondSuccess(w, http.StatusOK, nil, "Asset deleted successfully")
+}

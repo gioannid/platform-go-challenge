@@ -51,6 +51,7 @@ func New(cfg *config.Config, h *handler.Handler, mw MiddlewareChain) *Server {
 	// Asset management
 	api.HandleFunc("/assets", h.CreateAsset).Methods(http.MethodPost)
 	api.HandleFunc("/assets/{assetId}/description", h.UpdateAssetDescription).Methods(http.MethodPatch)
+	api.HandleFunc("/assets/{assetId}", h.DeleteAsset).Methods(http.MethodDelete)
 
 	// Favourite management
 	api.HandleFunc("/users/{userId}/favourites", h.ListFavourites).Methods(http.MethodGet)
@@ -75,6 +76,11 @@ func New(cfg *config.Config, h *handler.Handler, mw MiddlewareChain) *Server {
 // Start starts the HTTP server
 func (s *Server) Start() error {
 	return s.httpServer.ListenAndServe()
+}
+
+// Router returns the http.Handler for the server. This is primarily for testing.
+func (s *Server) Router() http.Handler {
+	return s.httpServer.Handler
 }
 
 // Shutdown gracefully shuts down the server

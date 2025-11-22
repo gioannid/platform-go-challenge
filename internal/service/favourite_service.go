@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/gioannid/platform-go-challenge/internal/config"
 	"github.com/gioannid/platform-go-challenge/internal/domain"
 	"github.com/gioannid/platform-go-challenge/internal/repository"
 	"github.com/google/uuid"
@@ -25,9 +26,10 @@ func NewFavouriteService(repo repository.FavouriteRepository) *FavouriteService 
 
 // ListFavourites returns paginated list of user's favourites
 func (s *FavouriteService) ListFavourites(ctx context.Context, userID uuid.UUID, query *domain.PageQuery) ([]*domain.Favourite, int, error) {
+	cfg := config.Get()
 	// Business logic validation
-	if query.Limit > 1000 {
-		query.Limit = 1000 // Enforce maximum
+	if query.Limit > cfg.MaxPageItems {
+		query.Limit = cfg.MaxPageItems // Enforce maximum
 	}
 
 	return s.repo.ListFavourites(ctx, userID, query)

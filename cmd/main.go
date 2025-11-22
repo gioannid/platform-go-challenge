@@ -21,7 +21,7 @@ import (
 
 func main() {
 	// Load configuration from environment
-	cfg := config.Load()
+	cfg := config.Get()
 
 	// Initialize repository (in-memory by default, swap with postgres if needed)
 	repo := memory.NewRepository()

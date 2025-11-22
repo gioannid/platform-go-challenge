@@ -46,6 +46,9 @@ func (r *MemoryRepository) ListFavourites(ctx context.Context, userID uuid.UUID,
 			favCopy := *fav
 			favCopy.Asset = asset
 			favs = append(favs, &favCopy)
+		} else {
+			// Return an error if the asset linked to a favourite does not exist
+			return nil, 0, domain.ErrDataIntegrity
 		}
 	}
 

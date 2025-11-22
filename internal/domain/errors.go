@@ -13,4 +13,5 @@ var (
 	ErrInvalidAudienceData = errors.New("invalid audience data")
 	ErrUnauthorized        = errors.New("unauthorized")
 	ErrForbidden           = errors.New("forbidden")
+	ErrDataIntegrity       = errors.New("data integrity error")
 )
