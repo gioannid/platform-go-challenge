@@ -2,6 +2,7 @@ package memory
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -319,6 +320,279 @@ func TestMemoryRepository_ConcurrentReadWrite(t *testing.T) {
 	}
 
 	wg.Wait()
+}
+
+func TestMemoryRepository_ListAssets(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("empty repository returns empty list", func(t *testing.T) {
+		repo := NewRepository()
+		query := domain.NewPageQuery(20, 0, "created_at", "desc")
+
+		assets, total, err := repo.ListAssets(ctx, query)
+
+		assert.NoError(t, err)
+		assert.Equal(t, 0, total)
+		assert.Equal(t, 0, len(assets))
+	})
+
+	t.Run("lists all assets with default sorting", func(t *testing.T) {
+		repo := NewRepository()
+
+		// Create test assets with deliberate time delays
+		asset1, _ := domain.NewAsset(domain.AssetTypeChart, "First Chart", domain.ChartData{
+			Title: "Chart 1", AxisXTitle: "X", AxisYTitle: "Y", Data: [][]float64{{1, 2}},
+		})
+		time.Sleep(10 * time.Millisecond)
+
+		asset2, _ := domain.NewAsset(domain.AssetTypeInsight, "Second Insight", domain.InsightData{
+			Text: "Insight text",
+		})
+		time.Sleep(10 * time.Millisecond)
+
+		asset3, _ := domain.NewAsset(domain.AssetTypeAudience, "Third Audience", domain.AudienceData{
+			Gender: "Male", BirthCountry: "USA", AgeGroups: []string{"18-24"},
+			HoursSocialDaily: 3.0, PurchasesLastMonth: 5,
+		})
+
+		repo.CreateAsset(ctx, asset1)
+		repo.CreateAsset(ctx, asset2)
+		repo.CreateAsset(ctx, asset3)
+
+		query := domain.NewPageQuery(20, 0, "created_at", "desc")
+		assets, total, err := repo.ListAssets(ctx, query)
+
+		assert.NoError(t, err)
+		assert.Equal(t, 3, total)
+		assert.Equal(t, 3, len(assets))
+
+		// Verify descending order by created_at (newest first)
+		assert.Equal(t, asset3.ID, assets[0].ID)
+		assert.Equal(t, asset2.ID, assets[1].ID)
+		assert.Equal(t, asset1.ID, assets[2].ID)
+	})
+
+	t.Run("pagination with limit and offset", func(t *testing.T) {
+		repo := NewRepository()
+
+		// Create 5 assets
+		for i := 0; i < 5; i++ {
+			asset, _ := domain.NewAsset(domain.AssetTypeChart, fmt.Sprintf("Chart %d", i), domain.ChartData{
+				Title: fmt.Sprintf("Title %d", i), AxisXTitle: "X", AxisYTitle: "Y", Data: [][]float64{{1, 2}},
+			})
+			repo.CreateAsset(ctx, asset)
+			time.Sleep(5 * time.Millisecond) // Ensure different timestamps
+		}
+
+		// Get page 2 (items 2-3)
+		query := domain.NewPageQuery(2, 2, "created_at", "asc")
+		assets, total, err := repo.ListAssets(ctx, query)
+
+		assert.NoError(t, err)
+		assert.Equal(t, 5, total)
+		assert.Equal(t, 2, len(assets))
+	})
+
+	t.Run("offset beyond total returns empty list", func(t *testing.T) {
+		repo := NewRepository()
+
+		asset, _ := domain.NewAsset(domain.AssetTypeChart, "Only Chart", domain.ChartData{
+			Title: "Chart", AxisXTitle: "X", AxisYTitle: "Y", Data: [][]float64{{1, 2}},
+		})
+		repo.CreateAsset(ctx, asset)
+
+		query := domain.NewPageQuery(20, 100, "created_at", "desc")
+		assets, total, err := repo.ListAssets(ctx, query)
+
+		assert.NoError(t, err)
+		assert.Equal(t, 1, total) // Total count still returned
+		assert.Equal(t, 0, len(assets))
+	})
+
+	t.Run("sorts by type ascending", func(t *testing.T) {
+		repo := NewRepository()
+
+		// Create assets in reverse order
+		audienceAsset, _ := domain.NewAsset(domain.AssetTypeAudience, "Audience", domain.AudienceData{
+			Gender: "Female", BirthCountry: "UK", AgeGroups: []string{"25-34"},
+			HoursSocialDaily: 2.5, PurchasesLastMonth: 3,
+		})
+		insightAsset, _ := domain.NewAsset(domain.AssetTypeInsight, "Insight", domain.InsightData{
+			Text: "Some insight",
+		})
+		chartAsset, _ := domain.NewAsset(domain.AssetTypeChart, "Chart", domain.ChartData{
+			Title: "Chart", AxisXTitle: "X", AxisYTitle: "Y", Data: [][]float64{{1, 2}},
+		})
+
+		repo.CreateAsset(ctx, audienceAsset)
+		repo.CreateAsset(ctx, insightAsset)
+		repo.CreateAsset(ctx, chartAsset)
+
+		query := domain.NewPageQuery(20, 0, "type", "asc")
+		assets, total, err := repo.ListAssets(ctx, query)
+
+		assert.NoError(t, err)
+		assert.Equal(t, 3, total)
+		assert.Equal(t, domain.AssetTypeAudience, assets[0].Type)
+		assert.Equal(t, domain.AssetTypeChart, assets[1].Type)
+		assert.Equal(t, domain.AssetTypeInsight, assets[2].Type)
+	})
+
+	t.Run("sorts by type descending", func(t *testing.T) {
+		repo := NewRepository()
+
+		audienceAsset, _ := domain.NewAsset(domain.AssetTypeAudience, "Audience", domain.AudienceData{
+			Gender: "Female", BirthCountry: "UK", AgeGroups: []string{"25-34"},
+			HoursSocialDaily: 2.5, PurchasesLastMonth: 3,
+		})
+		chartAsset, _ := domain.NewAsset(domain.AssetTypeChart, "Chart", domain.ChartData{
+			Title: "Chart", AxisXTitle: "X", AxisYTitle: "Y", Data: [][]float64{{1, 2}},
+		})
+
+		repo.CreateAsset(ctx, audienceAsset)
+		repo.CreateAsset(ctx, chartAsset)
+
+		query := domain.NewPageQuery(20, 0, "type", "desc")
+		assets, total, err := repo.ListAssets(ctx, query)
+
+		assert.NoError(t, err)
+		assert.Equal(t, 2, total)
+		assert.Equal(t, domain.AssetTypeChart, assets[0].Type)
+		assert.Equal(t, domain.AssetTypeAudience, assets[1].Type)
+	})
+
+	t.Run("sorts by description ascending", func(t *testing.T) {
+		repo := NewRepository()
+
+		asset1, _ := domain.NewAsset(domain.AssetTypeChart, "Zebra Chart", domain.ChartData{
+			Title: "Chart", AxisXTitle: "X", AxisYTitle: "Y", Data: [][]float64{{1, 2}},
+		})
+		asset2, _ := domain.NewAsset(domain.AssetTypeChart, "Apple Chart", domain.ChartData{
+			Title: "Chart", AxisXTitle: "X", AxisYTitle: "Y", Data: [][]float64{{1, 2}},
+		})
+		asset3, _ := domain.NewAsset(domain.AssetTypeChart, "Mango Chart", domain.ChartData{
+			Title: "Chart", AxisXTitle: "X", AxisYTitle: "Y", Data: [][]float64{{1, 2}},
+		})
+
+		repo.CreateAsset(ctx, asset1)
+		repo.CreateAsset(ctx, asset2)
+		repo.CreateAsset(ctx, asset3)
+
+		query := domain.NewPageQuery(20, 0, "description", "asc")
+		assets, total, err := repo.ListAssets(ctx, query)
+
+		assert.NoError(t, err)
+		assert.Equal(t, 3, total)
+		assert.Equal(t, "Apple Chart", assets[0].Description)
+		assert.Equal(t, "Mango Chart", assets[1].Description)
+		assert.Equal(t, "Zebra Chart", assets[2].Description)
+	})
+
+	t.Run("sorts by description descending", func(t *testing.T) {
+		repo := NewRepository()
+
+		asset1, _ := domain.NewAsset(domain.AssetTypeChart, "Alpha", domain.ChartData{
+			Title: "Chart", AxisXTitle: "X", AxisYTitle: "Y", Data: [][]float64{{1, 2}},
+		})
+		asset2, _ := domain.NewAsset(domain.AssetTypeChart, "Zulu", domain.ChartData{
+			Title: "Chart", AxisXTitle: "X", AxisYTitle: "Y", Data: [][]float64{{1, 2}},
+		})
+
+		repo.CreateAsset(ctx, asset1)
+		repo.CreateAsset(ctx, asset2)
+
+		query := domain.NewPageQuery(20, 0, "description", "desc")
+		assets, total, err := repo.ListAssets(ctx, query)
+
+		assert.NoError(t, err)
+		assert.Equal(t, 2, total)
+		assert.Equal(t, "Zulu", assets[0].Description)
+		assert.Equal(t, "Alpha", assets[1].Description)
+	})
+
+	t.Run("sorts by updated_at", func(t *testing.T) {
+		repo := NewRepository()
+
+		asset1, _ := domain.NewAsset(domain.AssetTypeChart, "Chart 1", domain.ChartData{
+			Title: "Chart", AxisXTitle: "X", AxisYTitle: "Y", Data: [][]float64{{1, 2}},
+		})
+		repo.CreateAsset(ctx, asset1)
+		time.Sleep(10 * time.Millisecond)
+
+		asset2, _ := domain.NewAsset(domain.AssetTypeChart, "Chart 2", domain.ChartData{
+			Title: "Chart", AxisXTitle: "X", AxisYTitle: "Y", Data: [][]float64{{1, 2}},
+		})
+		repo.CreateAsset(ctx, asset2)
+		time.Sleep(10 * time.Millisecond)
+
+		// Update asset1 (making it the most recently updated)
+		repo.UpdateAssetDescription(ctx, asset1.ID, "Updated Chart 1")
+		time.Sleep(10 * time.Millisecond)
+
+		query := domain.NewPageQuery(20, 0, "updated_at", "desc")
+		assets, total, err := repo.ListAssets(ctx, query)
+
+		assert.NoError(t, err)
+		assert.Equal(t, 2, total)
+		assert.Equal(t, asset1.ID, assets[0].ID) // Most recently updated
+		assert.Equal(t, asset2.ID, assets[1].ID)
+	})
+
+	t.Run("concurrent read access is thread-safe", func(t *testing.T) {
+		repo := NewRepository()
+
+		// Create some assets
+		for i := 0; i < 10; i++ {
+			asset, _ := domain.NewAsset(domain.AssetTypeChart, fmt.Sprintf("Chart %d", i), domain.ChartData{
+				Title: fmt.Sprintf("Title %d", i), AxisXTitle: "X", AxisYTitle: "Y", Data: [][]float64{{1, 2}},
+			})
+			repo.CreateAsset(ctx, asset)
+		}
+
+		// Simulate concurrent reads
+		var wg sync.WaitGroup
+		errors := make(chan error, 10)
+
+		for i := 0; i < 10; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				query := domain.NewPageQuery(5, 0, "created_at", "desc")
+				_, _, err := repo.ListAssets(ctx, query)
+				if err != nil {
+					errors <- err
+				}
+			}()
+		}
+
+		wg.Wait()
+		close(errors)
+
+		// No errors should occur
+		for err := range errors {
+			t.Errorf("Concurrent access error: %v", err)
+		}
+	})
+
+	t.Run("partial page at end of results", func(t *testing.T) {
+		repo := NewRepository()
+
+		// Create 7 assets
+		for i := 0; i < 7; i++ {
+			asset, _ := domain.NewAsset(domain.AssetTypeChart, fmt.Sprintf("Chart %d", i), domain.ChartData{
+				Title: fmt.Sprintf("Title %d", i), AxisXTitle: "X", AxisYTitle: "Y", Data: [][]float64{{1, 2}},
+			})
+			repo.CreateAsset(ctx, asset)
+		}
+
+		// Request page size of 5, offset 5 (should return 2 items)
+		query := domain.NewPageQuery(5, 5, "created_at", "desc")
+		assets, total, err := repo.ListAssets(ctx, query)
+
+		assert.NoError(t, err)
+		assert.Equal(t, 7, total)
+		assert.Equal(t, 2, len(assets)) // Only 2 items remaining
+	})
 }
 
 // Helper function

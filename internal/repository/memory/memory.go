@@ -242,6 +242,59 @@ func (r *MemoryRepository) DeleteAsset(ctx context.Context, assetID uuid.UUID) e
 	return nil
 }
 
+// ListAssets returns paginated list of all assets in the system
+func (r *MemoryRepository) ListAssets(ctx context.Context, query *domain.PageQuery) ([]*domain.Asset, int, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	// Convert map to slice
+	assets := make([]*domain.Asset, 0, len(r.assets))
+	for _, asset := range r.assets {
+		assets = append(assets, asset)
+	}
+
+	total := len(assets)
+
+	// Sort based on query
+	sort.Slice(assets, func(i, j int) bool {
+		switch query.SortBy {
+		case "type":
+			if query.Order == "asc" {
+				return assets[i].Type < assets[j].Type
+			}
+			return assets[i].Type > assets[j].Type
+		case "description":
+			if query.Order == "asc" {
+				return assets[i].Description < assets[j].Description
+			}
+			return assets[i].Description > assets[j].Description
+		case "updated_at":
+			if query.Order == "asc" {
+				return assets[i].UpdatedAt.Before(assets[j].UpdatedAt)
+			}
+			return assets[i].UpdatedAt.After(assets[j].UpdatedAt)
+		default: // created_at
+			if query.Order == "asc" {
+				return assets[i].CreatedAt.Before(assets[j].CreatedAt)
+			}
+			return assets[i].CreatedAt.After(assets[j].CreatedAt)
+		}
+	})
+
+	// Apply pagination
+	start := query.Offset
+	end := query.Offset + query.Limit
+
+	if start > len(assets) {
+		return []*domain.Asset{}, total, nil
+	}
+	if end > len(assets) {
+		end = len(assets)
+	}
+
+	return assets[start:end], total, nil
+}
+
 // Ping checks if the repository is accessible
 func (r *MemoryRepository) Ping(ctx context.Context) error {
 	return nil

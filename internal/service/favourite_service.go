@@ -97,6 +97,17 @@ func (s *FavouriteService) DeleteAsset(ctx context.Context, assetID uuid.UUID) e
 	return s.repo.DeleteAsset(ctx, assetID)
 }
 
+// ListAssets returns paginated list of all assets in the system
+func (s *FavouriteService) ListAssets(ctx context.Context, query *domain.PageQuery) ([]*domain.Asset, int, error) {
+	cfg := config.Get()
+	// Business logic validation
+	if query.Limit > cfg.MaxPageItems {
+		query.Limit = cfg.MaxPageItems // Enforce maximum
+	}
+
+	return s.repo.ListAssets(ctx, query)
+}
+
 // HealthCheck verifies service health
 func (s *FavouriteService) HealthCheck(ctx context.Context) error {
 	return s.repo.Ping(ctx)

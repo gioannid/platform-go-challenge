@@ -105,6 +105,19 @@ definitions:
         example: false
         type: boolean
     type: object
+  handler.ListAssetsResponse:
+    properties:
+      assets:
+        items:
+          $ref: '#/definitions/domain.Asset'
+        type: array
+      limit:
+        type: integer
+      offset:
+        type: integer
+      total:
+        type: integer
+    type: object
   handler.ListFavouritesResponse:
     properties:
       favourites:
@@ -194,6 +207,60 @@ paths:
       tags:
       - health
   /assets:
+    get:
+      consumes:
+      - application/json
+      description: Get paginated list of all assets in the system
+      parameters:
+      - default: 20
+        description: Number of items per page
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Number of items to skip
+        in: query
+        name: offset
+        type: integer
+      - description: Sort field
+        enum:
+        - created_at
+        - updated_at
+        - type
+        - description
+        in: query
+        name: sortBy
+        type: string
+      - description: Sort order
+        enum:
+        - asc
+        - desc
+        in: query
+        name: order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.ListAssetsResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.BadRequestError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.InternalServerError'
+      summary: List all assets
+      tags:
+      - assets
     post:
       consumes:
       - application/json

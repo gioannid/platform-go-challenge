@@ -25,10 +25,9 @@ type FavouriteRepository interface {
 	CreateAsset(ctx context.Context, asset *domain.Asset) error
 	UpdateAssetDescription(ctx context.Context, assetID uuid.UUID, description string) error
 	DeleteAsset(ctx context.Context, assetID uuid.UUID) error
+	ListAssets(ctx context.Context, query *domain.PageQuery) ([]*domain.Asset, int, error)
 
 	// Health check
 	Ping(ctx context.Context) error
 	Sanity(ctx context.Context) error
-
-	// TODO: Implement user management (operations on users)
 }

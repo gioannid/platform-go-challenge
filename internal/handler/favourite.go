@@ -326,3 +326,49 @@ func (h *Handler) DeleteAsset(w http.ResponseWriter, r *http.Request) {
 
 	respondSuccess(w, http.StatusOK, nil, "Asset deleted successfully")
 }
+
+// ListAssetsResponse represents paginated assets response
+type ListAssetsResponse struct {
+	Assets []*domain.Asset `json:"assets"`
+	Total  int             `json:"total"`
+	Limit  int             `json:"limit"`
+	Offset int             `json:"offset"`
+}
+
+// ListAssets handles GET /assets
+//
+//	@Summary		List all assets
+//	@Description	Get paginated list of all assets in the system
+//	@Tags			assets
+//	@Accept			json
+//	@Produce		json
+//	@Param			limit	query		int		false	"Number of items per page"	default(20)
+//	@Param			offset	query		int		false	"Number of items to skip"	default(0)
+//	@Param			sortBy	query		string	false	"Sort field"				Enums(created_at, updated_at, type, description)
+//	@Param			order	query		string	false	"Sort order"				Enums(asc, desc)
+//	@Success		200		{object}	Response{data=ListAssetsResponse}
+//	@Failure		400		{object}	BadRequestError
+//	@Failure		500		{object}	InternalServerError
+//	@Router			/assets [get]
+func (h *Handler) ListAssets(w http.ResponseWriter, r *http.Request) {
+	// Parse query parameters
+	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	sortBy := r.URL.Query().Get("sortBy")
+	order := r.URL.Query().Get("order")
+
+	query := domain.NewPageQuery(limit, offset, sortBy, order)
+
+	assets, total, err := h.service.ListAssets(r.Context(), query)
+	if err != nil {
+		respondError(w, mapDomainError(err), err)
+		return
+	}
+
+	respondSuccess(w, http.StatusOK, ListAssetsResponse{
+		Assets: assets,
+		Total:  total,
+		Limit:  query.Limit,
+		Offset: query.Offset,
+	}, "")
+}

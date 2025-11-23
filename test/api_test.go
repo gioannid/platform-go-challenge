@@ -269,6 +269,111 @@ func TestIntegration_PaginationAndSorting(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
 
+func TestIntegration_ListAssets(t *testing.T) {
+	ts, repo := setupTestServer(t)
+	defer ts.Close()
+
+	ctx := context.Background()
+
+	// Create 5 assets with varying descriptions and creation times
+	asset1, _ := domain.NewAsset(
+		domain.AssetTypeChart,
+		"Alpha Chart",
+		domain.ChartData{
+			Title:      "Chart 1",
+			AxisXTitle: "X",
+			AxisYTitle: "Y",
+			Data:       [][]float64{{1, 100}},
+		},
+	)
+	time.Sleep(10 * time.Millisecond)
+	asset2, _ := domain.NewAsset(
+		domain.AssetTypeInsight,
+		"Beta Insight",
+		domain.InsightData{Text: "This is an insight."},
+	)
+	time.Sleep(10 * time.Millisecond)
+	asset3, _ := domain.NewAsset(
+		domain.AssetTypeAudience,
+		"Gamma Audience",
+		domain.AudienceData{
+			Gender:             "Female",
+			BirthCountry:       "USA",
+			AgeGroups:          []string{"25-34", "35-44"},
+			HoursSocialDaily:   2.5,
+			PurchasesLastMonth: 5,
+		},
+	)
+	time.Sleep(10 * time.Millisecond)
+	asset4, _ := domain.NewAsset(
+		domain.AssetTypeChart,
+		"Delta Chart",
+		domain.ChartData{
+			Title:      "Chart 4",
+			AxisXTitle: "X",
+			AxisYTitle: "Y",
+			Data:       [][]float64{{1, 100}},
+		},
+	)
+	time.Sleep(10 * time.Millisecond)
+	asset5, _ := domain.NewAsset(
+		domain.AssetTypeInsight,
+		"Epsilon Insight",
+		domain.InsightData{Text: "Another important insight."},
+	)
+	require.NoError(t, repo.CreateAsset(ctx, asset1))
+	require.NoError(t, repo.CreateAsset(ctx, asset2))
+	require.NoError(t, repo.CreateAsset(ctx, asset3))
+	require.NoError(t, repo.CreateAsset(ctx, asset4))
+	require.NoError(t, repo.CreateAsset(ctx, asset5))
+
+	// Test default list (no params)
+	resp, err := http.Get(ts.URL + "/api/v1/assets")
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	var listResp handler.Response
+	err = json.NewDecoder(resp.Body).Decode(&listResp)
+	require.NoError(t, err)
+	require.True(t, listResp.Success)
+	listData := listResp.Data.(map[string]interface{})
+	assert.Equal(t, float64(5), listData["total"])
+	assets := listData["assets"].([]interface{})
+	assert.Len(t, assets, 5)
+
+	// Test pagination
+	resp, err = http.Get(ts.URL + "/api/v1/assets?limit=2&offset=1")
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	err = json.NewDecoder(resp.Body).Decode(&listResp)
+	require.NoError(t, err)
+	listData = listResp.Data.(map[string]interface{})
+	assert.Equal(t, float64(5), listData["total"])
+	assets = listData["assets"].([]interface{})
+	assert.Len(t, assets, 2)
+
+	// Test sorting by description ascending
+	resp, err = http.Get(ts.URL + "/api/v1/assets?sortBy=description&order=asc")
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	err = json.NewDecoder(resp.Body).Decode(&listResp)
+	require.NoError(t, err)
+	listData = listResp.Data.(map[string]interface{})
+	assets = listData["assets"].([]interface{})
+	assert.Equal(t, "Alpha Chart", assets[0].(map[string]interface{})["description"])
+	assert.Equal(t, "Beta Insight", assets[1].(map[string]interface{})["description"])
+
+	// Test sorting by created_at descending (newest first)
+	resp, err = http.Get(ts.URL + "/api/v1/assets?sortBy=created_at&order=desc")
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	err = json.NewDecoder(resp.Body).Decode(&listResp)
+	require.NoError(t, err)
+	listData = listResp.Data.(map[string]interface{})
+	assets = listData["assets"].([]interface{})
+	assert.Equal(t, "Epsilon Insight", assets[0].(map[string]interface{})["description"])
+	assert.Equal(t, "Delta Chart", assets[1].(map[string]interface{})["description"])
+}
+
 func TestIntegration_ErrorCases(t *testing.T) {
 	ts, _ := setupTestServer(t)
 	defer ts.Close()

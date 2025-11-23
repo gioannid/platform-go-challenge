@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/gioannid/platform-go-challenge/internal/config"
@@ -68,6 +69,14 @@ func (m *MockRepository) DeleteAsset(ctx context.Context, assetID uuid.UUID) err
 	return args.Error(0)
 }
 
+// ListAssets mocks the ListAssets method
+func (m *MockRepository) ListAssets(ctx context.Context, query *domain.PageQuery) ([]*domain.Asset, int, error) {
+	args := m.Called(ctx, query)
+	if args.Get(0) == nil {
+		return nil, args.Int(1), args.Error(2)
+	}
+	return args.Get(0).([]*domain.Asset), args.Int(1), args.Error(2)
+}
 func (m *MockRepository) Ping(ctx context.Context) error {
 	args := m.Called(ctx)
 	return args.Error(0)
@@ -323,6 +332,114 @@ func TestFavouriteService_HealthCheck(t *testing.T) {
 
 	require.NoError(t, err)
 	mockRepo.AssertExpectations(t)
+}
+
+func TestFavouriteService_ListAssets(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("successful listing with default pagination", func(t *testing.T) {
+		mockRepo := new(MockRepository)
+		service := NewFavouriteService(mockRepo)
+
+		// Create test assets
+		asset1, _ := domain.NewAsset(domain.AssetTypeChart, "Chart 1", domain.ChartData{
+			Title:      "Sales Chart",
+			AxisXTitle: "Month",
+			AxisYTitle: "Revenue",
+			Data:       [][]float64{{1, 100}, {2, 200}},
+		})
+		asset2, _ := domain.NewAsset(domain.AssetTypeInsight, "Insight 1", domain.InsightData{
+			Text: "40% of users engage daily",
+		})
+
+		expectedAssets := []*domain.Asset{asset1, asset2}
+		query := domain.NewPageQuery(20, 0, "created_at", "desc")
+
+		mockRepo.On("ListAssets", ctx, query).Return(expectedAssets, 2, nil)
+
+		assets, total, err := service.ListAssets(ctx, query)
+
+		assert.NoError(t, err)
+		assert.Equal(t, 2, total)
+		assert.Equal(t, 2, len(assets))
+		assert.Equal(t, asset1.ID, assets[0].ID)
+		assert.Equal(t, asset2.ID, assets[1].ID)
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("empty result set", func(t *testing.T) {
+		mockRepo := new(MockRepository)
+		service := NewFavouriteService(mockRepo)
+
+		query := domain.NewPageQuery(20, 0, "created_at", "desc")
+		mockRepo.On("ListAssets", ctx, query).Return([]*domain.Asset{}, 0, nil)
+
+		assets, total, err := service.ListAssets(ctx, query)
+
+		assert.NoError(t, err)
+		assert.Equal(t, 0, total)
+		assert.Equal(t, 0, len(assets))
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("enforces maximum page limit", func(t *testing.T) {
+		mockRepo := new(MockRepository)
+		service := NewFavouriteService(mockRepo)
+
+		// Request more than max allowed (1000 is typically the max)
+		query := domain.NewPageQuery(5000, 0, "created_at", "desc")
+
+		// The service should enforce the max limit
+		expectedQuery := domain.NewPageQuery(1000, 0, "created_at", "desc")
+		mockRepo.On("ListAssets", ctx, expectedQuery).Return([]*domain.Asset{}, 0, nil)
+
+		_, _, err := service.ListAssets(ctx, query)
+
+		assert.NoError(t, err)
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("repository error propagates", func(t *testing.T) {
+		mockRepo := new(MockRepository)
+		service := NewFavouriteService(mockRepo)
+
+		query := domain.NewPageQuery(20, 0, "created_at", "desc")
+		expectedErr := errors.New("database connection failed")
+		mockRepo.On("ListAssets", ctx, query).Return(nil, 0, expectedErr)
+
+		assets, total, err := service.ListAssets(ctx, query)
+
+		assert.Error(t, err)
+		assert.Equal(t, expectedErr, err)
+		assert.Nil(t, assets)
+		assert.Equal(t, 0, total)
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("pagination with offset", func(t *testing.T) {
+		mockRepo := new(MockRepository)
+		service := NewFavouriteService(mockRepo)
+
+		asset3, _ := domain.NewAsset(domain.AssetTypeAudience, "Audience 3", domain.AudienceData{
+			Gender:             "Female",
+			BirthCountry:       "UK",
+			AgeGroups:          []string{"25-34"},
+			HoursSocialDaily:   4.5,
+			PurchasesLastMonth: 3,
+		})
+
+		expectedAssets := []*domain.Asset{asset3}
+		query := domain.NewPageQuery(10, 20, "created_at", "desc")
+
+		mockRepo.On("ListAssets", ctx, query).Return(expectedAssets, 25, nil)
+
+		assets, total, err := service.ListAssets(ctx, query)
+
+		assert.NoError(t, err)
+		assert.Equal(t, 25, total)
+		assert.Equal(t, 1, len(assets))
+		mockRepo.AssertExpectations(t)
+	})
 }
 
 // Helper

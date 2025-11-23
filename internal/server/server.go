@@ -61,6 +61,7 @@ func New(cfg *config.Config, h *handler.Handler, mw MiddlewareChain) *Server {
 
 	// Asset management
 	api.HandleFunc("/assets", h.CreateAsset).Methods(http.MethodPost)
+	api.HandleFunc("/assets", h.ListAssets).Methods(http.MethodGet)
 	api.HandleFunc("/assets/{assetId}/description", h.UpdateAssetDescription).Methods(http.MethodPatch)
 	api.HandleFunc("/assets/{assetId}", h.DeleteAsset).Methods(http.MethodDelete)
 

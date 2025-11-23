@@ -63,6 +63,89 @@
             }
         },
         "/assets": {
+            "get": {
+                "description": "Get paginated list of all assets in the system",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "assets"
+                ],
+                "summary": "List all assets",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Number of items per page",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Number of items to skip",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "created_at",
+                            "updated_at",
+                            "type",
+                            "description"
+                        ],
+                        "type": "string",
+                        "description": "Sort field",
+                        "name": "sortBy",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "asc",
+                            "desc"
+                        ],
+                        "type": "string",
+                        "description": "Sort order",
+                        "name": "order",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handler.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.ListAssetsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.BadRequestError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.InternalServerError"
+                        }
+                    }
+                }
+            },
             "post": {
                 "description": "Create a new asset of type chart, insight, or audience.\n\n**Chart Example:**\n```\n{\n\"type\": \"chart\",\n\"description\": \"Monthly sales data\",\n\"data\": {\n\"title\": \"Q4 2025 Sales\",\n\"axis_x_title\": \"Month\",\n\"axis_y_title\": \"Revenue (USD)\",\n\"data\": [[100, 200], [300, 400]]\n}\n}\n```\n\n**Insight Example:**\n```\n{\n\"type\": \"insight\",\n\"description\": \"Social media usage\",\n\"data\": {\n\"text\": \"40% of millennials spend 3+ hours daily on social media\"\n}\n}\n```\n\n**Audience Example:**\n```\n{\n\"type\": \"audience\",\n\"description\": \"Target demographic\",\n\"data\": {\n\"gender\": \"Male\",\n\"birth_country\": \"USA\",\n\"age_groups\": [\"24-35\"],\n\"hours_social_daily\": 3.5,\n\"purchases_last_month\": 5\n}\n}\n```",
                 "consumes": [
@@ -611,6 +694,26 @@
                 "success": {
                     "type": "boolean",
                     "example": false
+                }
+            }
+        },
+        "handler.ListAssetsResponse": {
+            "type": "object",
+            "properties": {
+                "assets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.Asset"
+                    }
+                },
+                "limit": {
+                    "type": "integer"
+                },
+                "offset": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
                 }
             }
         },
