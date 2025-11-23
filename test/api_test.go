@@ -1,3 +1,5 @@
+// Package test contains integration tests for the API endpoints, verifying the complete workflow
+// TODO: Update tests to cover JWT authentication (if activated)
 package test
 
 import (

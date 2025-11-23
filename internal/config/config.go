@@ -29,9 +29,6 @@ type Config struct {
 	RateLimitRequests int
 	RateLimitWindow   time.Duration
 
-	// CORS TODO: to be removed
-	//AllowedOrigins []string
-
 	// Storage (for future database integration)
 	StorageType string // "memory" or e.g. "postgres"
 	DatabaseURL string
@@ -45,13 +42,18 @@ func load() *Config {
 		WriteTimeout:      getDurationEnv("WRITE_TIMEOUT", 10*time.Second),
 		IdleTimeout:       getDurationEnv("IDLE_TIMEOUT", 60*time.Second),
 		MaxPageItems:      getIntEnv("MAX_PAGE_ITEMS", 100),
-		AuthEnabled:       getBoolEnv("AUTH_ENABLED", false),               // TODO: implement autorization
-		JWTSecret:         getEnv("JWT_SECRET", "change-me-in-production"), // TODO: enforce stronger secret in prod
 		RateLimitRequests: getIntEnv("RATE_LIMIT_REQUESTS", 100),
 		RateLimitWindow:   getDurationEnv("RATE_LIMIT_WINDOW", 1*time.Minute),
-		//AllowedOrigins:    []string{getEnv("ALLOWED_ORIGINS", "*")},	TODO: to be removed
-		StorageType: getEnv("STORAGE_TYPE", "memory"), // TODO currently ignored
-		DatabaseURL: getEnv("DATABASE_URL", ""),       // Persistent storage not implemented yet
+		StorageType:       getEnv("STORAGE_TYPE", "memory"), // TODO currently ignored
+		DatabaseURL:       getEnv("DATABASE_URL", ""),       // Persistent storage not implemented yet
+		AuthEnabled:       getBoolEnv("AUTH_ENABLED", false),
+		// TODO dummy JWT_SECRET value for development; in production use a secure, random secret of at least 256 bits
+		// Below secret along with following data:
+		// {"user_id":"a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11","exp":1855920000}
+		// corresponds to HS256 JWT token (valid until 23rd Oct 2028):
+		// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiYTBlZWJjOTktOWMwYi00ZWY4LWJiNmQtNmJiOWJkMzgwYTExIiwiZXhwIjoxODU1OTIwMDAwfQ.2OG1_i188KTGnOYAN7RCNpCEzY-nmwdO5UdLTfHSWOU
+		// If AUTH_ENABLED, Use this token in all /api/v1 requests.
+		JWTSecret: getEnv("JWT_SECRET", "a-string-secret-at-least-256-bits-long"),
 	}
 }
 

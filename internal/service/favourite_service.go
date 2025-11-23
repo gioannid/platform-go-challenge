@@ -1,5 +1,7 @@
 // Package service defines the Service Layer, implementing the business logic of handling assets and
-// marking assets as favourites
+// marking assets as favourites. Note that while users are authenticated via JWT in Presentation layer,
+// there is not yet implemented any user management (registration, login, etc.)
+// or authorization (roles, permissions, no need to specify the user id in non-admin accesses) mechanism.
 package service
 
 import (

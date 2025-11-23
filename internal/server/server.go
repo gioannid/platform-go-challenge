@@ -7,6 +7,7 @@ import (
 
 	"github.com/gioannid/platform-go-challenge/internal/config"
 	"github.com/gioannid/platform-go-challenge/internal/handler"
+	"github.com/gioannid/platform-go-challenge/internal/middleware"
 	"github.com/gorilla/mux"
 
 	_ "github.com/gioannid/platform-go-challenge/docs"
@@ -32,23 +33,20 @@ func (mc MiddlewareChain) Append(middlewares ...func(http.Handler) http.Handler)
 	return append(mc, middlewares...)
 }
 
-// then: wraps the handler with all middleware
-func (mc MiddlewareChain) then(h http.Handler) http.Handler {
-	for i := len(mc) - 1; i >= 0; i-- {
-		h = mc[i](h)
-	}
-	return h
-}
-
-// New creates a new HTTP server
-func New(cfg *config.Config, h *handler.Handler, mw MiddlewareChain) *Server {
+func New(cfg *config.Config, h *handler.Handler, generalMW MiddlewareChain) *Server {
 	r := mux.NewRouter()
+
+	// Apply general middleware to the main router.
+	// These middlewares will be applied to all routes (health, swagger, and API v1).
+	for _, m := range generalMW {
+		r.Use(m)
+	}
 
 	// Health endpoints (no auth required)
 	r.HandleFunc("/healthz", h.HealthCheck).Methods(http.MethodGet)
 	r.HandleFunc("/readyz", h.ReadinessCheck).Methods(http.MethodGet)
 
-	// Swagger UI endpoint
+	// Swagger UI endpoint (no auth required)
 	r.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
 		httpSwagger.URL("http://localhost:8080/swagger/doc.json"),
 		httpSwagger.DeepLinking(true),
@@ -56,27 +54,32 @@ func New(cfg *config.Config, h *handler.Handler, mw MiddlewareChain) *Server {
 		httpSwagger.DomID("swagger-ui"),
 	)).Methods(http.MethodGet)
 
-	// API v1 routes
+	// API v1 routes subrouter
 	api := r.PathPrefix("/api/v1").Subrouter()
 
-	// Asset management
+	// Conditionally apply JWT authentication middleware *only* to the API v1 subrouter
+	if cfg.AuthEnabled {
+		api.Use(middleware.JWTAuth(cfg.JWTSecret))
+	}
+
+	// Asset management (these handlers will be protected if auth is enabled)
 	api.HandleFunc("/assets", h.CreateAsset).Methods(http.MethodPost)
 	api.HandleFunc("/assets", h.ListAssets).Methods(http.MethodGet)
 	api.HandleFunc("/assets/{assetId}/description", h.UpdateAssetDescription).Methods(http.MethodPatch)
 	api.HandleFunc("/assets/{assetId}", h.DeleteAsset).Methods(http.MethodDelete)
 
-	// Favourite management
+	// Favourite management (these handlers will be protected if auth is enabled)
+	// TODO: Update routes to remove {userId} from path parameters.
+	// The userId will now be extracted from the JWT token in the middleware and
+	// passed via the request context to the handlers.
 	api.HandleFunc("/users/{userId}/favourites", h.ListFavourites).Methods(http.MethodGet)
 	api.HandleFunc("/users/{userId}/favourites", h.AddFavourite).Methods(http.MethodPost)
 	api.HandleFunc("/users/{userId}/favourites/{favouriteId}", h.RemoveFavourite).Methods(http.MethodDelete)
 
-	// Apply middleware chain
-	handler := mw.then(r)
-
 	return &Server{
 		httpServer: &http.Server{
 			Addr:         cfg.ServerAddress,
-			Handler:      handler,
+			Handler:      r, // The main router 'r' is now the handler, with middleware applied via .Use()
 			ReadTimeout:  cfg.ReadTimeout,
 			WriteTimeout: cfg.WriteTimeout,
 			IdleTimeout:  cfg.IdleTimeout,

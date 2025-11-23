@@ -22,11 +22,11 @@ It is appreciated, though not required, if a Dockerfile is included.
 
 - **Clean Architecture**: Layered design (domain, repository, service, handler)
 - **Thread-Safe In-Memory Storage**: Concurrent-safe with `sync.RWMutex`
-- **Optional JWT Authentication**: Enable/disable via environment variable ***(TODO)***
+- **Optional JWT Authentication**: Enable/disable via environment variable
 - **Pagination & Sorting**: Efficient handling of large datasets
-- **Production Patterns**: Health checks, rate limiting, CORS, recovery middleware ***(TODO)***
+- **Production Patterns**: Health checks, rate limiting etc. middleware ***(TODO)***
 - **Extensible Storage**: Easy swap between in-memory and ***(TODO) persisted database***
-- **Comprehensive Testing**: Unit and integration tests ***(TODO)***
+- **Comprehensive Testing**: Unit and integration tests
 - **Docker Support**: Dockerfile and docker-compose included ***(TODO)***
 
 ## Installation and Usage

@@ -66,6 +66,11 @@ const docTemplate = `{
         },
         "/assets": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Get paginated list of all assets in the system",
                 "consumes": [
                     "application/json"
@@ -149,6 +154,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Create a new asset of type chart, insight, or audience.\n\n**Chart Example:**\n` + "`" + `` + "`" + `` + "`" + `\n{\n\"type\": \"chart\",\n\"description\": \"Monthly sales data\",\n\"data\": {\n\"title\": \"Q4 2025 Sales\",\n\"axis_x_title\": \"Month\",\n\"axis_y_title\": \"Revenue (USD)\",\n\"data\": [[100, 200], [300, 400]]\n}\n}\n` + "`" + `` + "`" + `` + "`" + `\n\n**Insight Example:**\n` + "`" + `` + "`" + `` + "`" + `\n{\n\"type\": \"insight\",\n\"description\": \"Social media usage\",\n\"data\": {\n\"text\": \"40% of millennials spend 3+ hours daily on social media\"\n}\n}\n` + "`" + `` + "`" + `` + "`" + `\n\n**Audience Example:**\n` + "`" + `` + "`" + `` + "`" + `\n{\n\"type\": \"audience\",\n\"description\": \"Target demographic\",\n\"data\": {\n\"gender\": \"Male\",\n\"birth_country\": \"USA\",\n\"age_groups\": [\"24-35\"],\n\"hours_social_daily\": 3.5,\n\"purchases_last_month\": 5\n}\n}\n` + "`" + `` + "`" + `` + "`" + `",
                 "consumes": [
                     "application/json"
@@ -207,6 +217,11 @@ const docTemplate = `{
         },
         "/assets/{assetId}": {
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Delete an existing asset",
                 "consumes": [
                     "application/json"
@@ -257,6 +272,11 @@ const docTemplate = `{
         },
         "/assets/{assetId}/description": {
             "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Update the description of an existing asset",
                 "consumes": [
                     "application/json"
@@ -316,6 +336,11 @@ const docTemplate = `{
         },
         "/users/{userId}/favourites": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Get paginated list of all favourites for a specific user",
                 "consumes": [
                     "application/json"
@@ -410,6 +435,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Add an asset to user's favourites",
                 "consumes": [
                     "application/json"
@@ -487,6 +517,11 @@ const docTemplate = `{
         },
         "/users/{userId}/favourites/{favouriteId}": {
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Remove an asset from user's favourites",
                 "consumes": [
                     "application/json"
@@ -805,8 +840,8 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "localhost:8080",
 	BasePath:         "/api/v1",
 	Schemes:          []string{"http", "https"},
-	Title:            "GWI Platform Favourites API",
-	Description:      "REST API for managing user favourites with clean architecture\nAllows users to favourite assets (charts, insights, audiences)",
+	Title:            "GWI Favourites API",
+	Description:      "A REST API for managing user favourites with optional JWT authentication.\nAllows users to favourite assets (charts, insights, audiences)\n\n## Authentication\nThis API supports optional JWT Bearer token authentication.\nTo use authenticated endpoints:\n1. Click \"Authorize\" button and enter: Bearer YOUR_TOKEN\n2. All subsequent requests will include the token",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

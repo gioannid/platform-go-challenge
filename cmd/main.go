@@ -2,10 +2,18 @@
 // It sets up configuration, initializes dependencies, and starts the HTTP server by default listening to port 8080
 // with graceful shutdown.
 //
-//	@title						GWI Platform Favourites API
+//	@title						GWI Favourites API
 //	@version					1.0
-//	@description				REST API for managing user favourites with clean architecture
+//	@description				A REST API for managing user favourites with optional JWT authentication.
 //	@description				Allows users to favourite assets (charts, insights, audiences)
+//
+// @description
+// @description     			## Authentication
+// @description     			This API supports optional JWT Bearer token authentication.
+// @description     			To use authenticated endpoints:
+// @description     			1. Click "Authorize" button and enter: Bearer YOUR_TOKEN
+// @description     			2. All subsequent requests will include the token
+//
 //	@termsOfService				http://swagger.io/terms/
 //
 //	@contact.name				API Support
@@ -57,16 +65,9 @@ func main() {
 
 	// Setup middleware chain
 	mw := server.NewChain(
-		middleware.Logger(), // TODO: add other middleware as needed
-		//        middleware.Recovery(),
-		//        middleware.CORS(cfg.AllowedOrigins),
-		//        middleware.RateLimit(cfg.RateLimitRequests, cfg.RateLimitWindow),
+		middleware.Logger(), // TODO: add other middleware as needed e.g.
+		// middleware.RateLimit(cfg.RateLimitRequests, cfg.RateLimitWindow),
 	)
-
-	// Add optional authentication if enabled
-	if cfg.AuthEnabled {
-		//		mw = mw.Append(middleware.JWTAuth(cfg.JWTSecret))	// TODO: implement JWTAuth middleware
-	}
 
 	// Create and configure HTTP server
 	srv := server.New(cfg, h, mw)

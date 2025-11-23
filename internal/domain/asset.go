@@ -54,7 +54,7 @@ type AudienceData struct {
 func (a *Asset) Validate() error {
 	if a.Type == "" {
 		return ErrInvalidAssetType
-	} // TODO: is this needed given the switch below? Make a test to confirm.
+	}
 
 	switch a.Type {
 	case AssetTypeChart, AssetTypeInsight, AssetTypeAudience:
