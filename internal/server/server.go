@@ -8,6 +8,9 @@ import (
 	"github.com/gioannid/platform-go-challenge/internal/config"
 	"github.com/gioannid/platform-go-challenge/internal/handler"
 	"github.com/gorilla/mux"
+
+	_ "github.com/gioannid/platform-go-challenge/docs"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 // Server holds HTTP server and dependencies
@@ -44,6 +47,14 @@ func New(cfg *config.Config, h *handler.Handler, mw MiddlewareChain) *Server {
 	// Health endpoints (no auth required)
 	r.HandleFunc("/healthz", h.HealthCheck).Methods(http.MethodGet)
 	r.HandleFunc("/readyz", h.ReadinessCheck).Methods(http.MethodGet)
+
+	// Swagger UI endpoint
+	r.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
+		httpSwagger.URL("http://localhost:8080/swagger/doc.json"),
+		httpSwagger.DeepLinking(true),
+		httpSwagger.DocExpansion("none"),
+		httpSwagger.DomID("swagger-ui"),
+	)).Methods(http.MethodGet)
 
 	// API v1 routes
 	api := r.PathPrefix("/api/v1").Subrouter()

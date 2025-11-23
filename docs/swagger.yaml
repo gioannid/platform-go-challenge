@@ -1,0 +1,500 @@
+basePath: /api/v1
+definitions:
+  domain.Asset:
+    properties:
+      created_at:
+        type: string
+      data:
+        additionalProperties:
+          type: string
+        description: Polymorphic data field
+        example:
+          '{"title"': '"Sample Chart"}'
+        type: object
+      description:
+        type: string
+      id:
+        type: string
+      type:
+        $ref: '#/definitions/domain.AssetType'
+      updated_at:
+        type: string
+    type: object
+  domain.AssetType:
+    enum:
+    - chart
+    - insight
+    - audience
+    type: string
+    x-enum-varnames:
+    - AssetTypeChart
+    - AssetTypeInsight
+    - AssetTypeAudience
+  domain.Favourite:
+    properties:
+      asset:
+        $ref: '#/definitions/domain.Asset'
+      asset_id:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      user_id:
+        type: string
+    type: object
+  handler.AddFavouriteRequest:
+    properties:
+      asset_id:
+        type: string
+    type: object
+  handler.BadRequestError:
+    properties:
+      error:
+        example: unexpected end of JSON input
+        type: string
+      success:
+        example: false
+        type: boolean
+    type: object
+  handler.ConflictError:
+    properties:
+      error:
+        example: resource already exists
+        type: string
+      success:
+        example: false
+        type: boolean
+    type: object
+  handler.CreateAssetRequest:
+    properties:
+      data:
+        type: object
+      description:
+        type: string
+      type:
+        $ref: '#/definitions/domain.AssetType'
+    type: object
+  handler.HealthResponse:
+    properties:
+      data:
+        additionalProperties:
+          type: string
+        example:
+          '{"status"': '"ok"}'
+        type: object
+      success:
+        example: true
+        type: boolean
+    type: object
+  handler.InternalServerError:
+    properties:
+      error:
+        example: internal server error
+        type: string
+      success:
+        example: false
+        type: boolean
+    type: object
+  handler.InvalidUUIDError:
+    properties:
+      error:
+        example: 'invalid UUID length: 10'
+        type: string
+      success:
+        example: false
+        type: boolean
+    type: object
+  handler.ListFavouritesResponse:
+    properties:
+      favourites:
+        items:
+          $ref: '#/definitions/domain.Favourite'
+        type: array
+      limit:
+        type: integer
+      offset:
+        type: integer
+      total:
+        type: integer
+    type: object
+  handler.NotFoundError:
+    properties:
+      error:
+        example: resource not found
+        type: string
+      success:
+        example: false
+        type: boolean
+    type: object
+  handler.Response:
+    properties:
+      data: {}
+      error:
+        type: string
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  handler.SuccessResponse:
+    properties:
+      message:
+        example: operation completed successfully
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  handler.UpdateAssetDescriptionRequest:
+    properties:
+      description:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@example.com
+    name: API Support
+    url: https://github.com/gioannid/platform-go-challenge
+  description: |-
+    REST API for managing user favourites with clean architecture
+    Allows users to favourite assets (charts, insights, audiences)
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: GWI Platform Favourites API
+  version: "1.0"
+paths:
+  /../../healthz:
+    get:
+      description: Returns the health status of the service
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.HealthResponse'
+      summary: Health check
+      tags:
+      - health
+  /../../readyz:
+    get:
+      description: Returns whether the service is ready to accept traffic
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.HealthResponse'
+      summary: Readiness check
+      tags:
+      - health
+  /assets:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Create a new asset of type chart, insight, or audience.
+
+        **Chart Example:**
+        ```
+        {
+        "type": "chart",
+        "description": "Monthly sales data",
+        "data": {
+        "title": "Q4 2025 Sales",
+        "axis_x_title": "Month",
+        "axis_y_title": "Revenue (USD)",
+        "data": [[100, 200], [300, 400]]
+        }
+        }
+        ```
+
+        **Insight Example:**
+        ```
+        {
+        "type": "insight",
+        "description": "Social media usage",
+        "data": {
+        "text": "40% of millennials spend 3+ hours daily on social media"
+        }
+        }
+        ```
+
+        **Audience Example:**
+        ```
+        {
+        "type": "audience",
+        "description": "Target demographic",
+        "data": {
+        "gender": "Male",
+        "birth_country": "USA",
+        "age_groups": ["24-35"],
+        "hours_social_daily": 3.5,
+        "purchases_last_month": 5
+        }
+        }
+        ```
+      parameters:
+      - description: Asset creation request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateAssetRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/domain.Asset'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.BadRequestError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.InternalServerError'
+      summary: Create asset
+      tags:
+      - assets
+  /assets/{assetId}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an existing asset
+      parameters:
+      - description: Asset ID (UUID)
+        in: path
+        name: assetId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.InvalidUUIDError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.NotFoundError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.InternalServerError'
+      summary: Delete asset
+      tags:
+      - assets
+  /assets/{assetId}/description:
+    patch:
+      consumes:
+      - application/json
+      description: Update the description of an existing asset
+      parameters:
+      - description: Asset ID (UUID)
+        in: path
+        name: assetId
+        required: true
+        type: string
+      - description: New description
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateAssetDescriptionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.BadRequestError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.NotFoundError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.InternalServerError'
+      summary: Update asset description
+      tags:
+      - assets
+  /users/{userId}/favourites:
+    get:
+      consumes:
+      - application/json
+      description: Get paginated list of all favourites for a specific user
+      parameters:
+      - description: User ID (UUID)
+        in: path
+        name: userId
+        required: true
+        type: string
+      - default: 20
+        description: Number of items per page
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Number of items to skip
+        in: query
+        name: offset
+        type: integer
+      - description: Sort field
+        enum:
+        - created_at
+        - updated_at
+        in: query
+        name: sortBy
+        type: string
+      - description: Sort order
+        enum:
+        - asc
+        - desc
+        in: query
+        name: order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.ListFavouritesResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.InvalidUUIDError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.NotFoundError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.InternalServerError'
+      summary: List user favourites
+      tags:
+      - favourites
+    post:
+      consumes:
+      - application/json
+      description: Add an asset to user's favourites
+      parameters:
+      - description: User ID (UUID)
+        in: path
+        name: userId
+        required: true
+        type: string
+      - description: Favourite details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.AddFavouriteRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/domain.Favourite'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.BadRequestError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.NotFoundError'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handler.ConflictError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.InternalServerError'
+      summary: Add favourite
+      tags:
+      - favourites
+  /users/{userId}/favourites/{favouriteId}:
+    delete:
+      consumes:
+      - application/json
+      description: Remove an asset from user's favourites
+      parameters:
+      - description: User ID (UUID)
+        in: path
+        name: userId
+        required: true
+        type: string
+      - description: Favourite ID (UUID)
+        in: path
+        name: favouriteId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.InvalidUUIDError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.NotFoundError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.InternalServerError'
+      summary: Remove favourite
+      tags:
+      - favourites
+schemes:
+- http
+- https
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

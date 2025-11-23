@@ -1,6 +1,29 @@
 // Package main implements the entry point for the GlobalWebIndex Engineering Challenge application.
 // It sets up configuration, initializes dependencies, and starts the HTTP server by default listening to port 8080
 // with graceful shutdown.
+//
+//	@title						GWI Platform Favourites API
+//	@version					1.0
+//	@description				REST API for managing user favourites with clean architecture
+//	@description				Allows users to favourite assets (charts, insights, audiences)
+//	@termsOfService				http://swagger.io/terms/
+//
+//	@contact.name				API Support
+//	@contact.url				https://github.com/gioannid/platform-go-challenge
+//	@contact.email				support@example.com
+//
+//	@license.name				MIT
+//	@license.url				https://opensource.org/licenses/MIT
+//
+//	@host						localhost:8080
+//	@BasePath					/api/v1
+//
+//	@schemes					http https
+//
+//	@securityDefinitions.apikey	BearerAuth
+//	@in							header
+//	@name						Authorization
+//	@description				Type "Bearer" followed by a space and JWT token.
 package main
 
 import (

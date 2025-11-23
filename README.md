@@ -41,7 +41,7 @@ To install and run the application manually, follow these steps:
 #### 1. Install Go
 
 **For Windows:**
-1.  Visit the official Go website: `https://golang.org/dl/`
+1.  Visit the official Go website: https://golang.org/dl/
 2.  Download the MSI installer for your Windows version.
 3.  Run the installer and follow the prompts. The installer will automatically add Go to your PATH environment variable.
 
@@ -130,12 +130,32 @@ To ensure the application's correctness and maintainability, various tests have 
     ```
     This will generate an HTML coverage report that you can view in your browser.
 
-*   **Run benchmarks:**
-    ```bash
-    go test -bench=. -benchmem ./...
-    ```
-
 *   **Clean test cache:**
     ```bash
     go clean -testcache
     ```
+
+## API Documentation
+
+This project includes interactive Swagger/OpenAPI documentation.
+
+### Accessing Swagger UI
+
+#### 1. Make sure server is running:
+```bash
+go run cmd/main.go
+```
+
+#### 2. Open your browser and navigate to:
+http://localhost:8080/swagger/index.html
+
+You can explore all API endpoints, 
+view request/response schemas, and even test the API directly from the browser.
+
+### Regenerating Documentation
+
+If you modify API handlers or add new endpoints, regenerate the Swagger docs:
+
+```bash
+swag init -g cmd/main.go -o docs
+````

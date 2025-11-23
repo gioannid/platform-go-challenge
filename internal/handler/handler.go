@@ -30,6 +30,54 @@ type Response struct {
 	Message string      `json:"message,omitempty"`
 }
 
+// ErrorResponse represents an error response
+type ErrorResponse struct {
+	Success bool   `json:"success" example:"false"`
+	Error   string `json:"error" example:"error message"`
+}
+
+// BadRequestError represents a 400 error
+type BadRequestError struct {
+	Success bool   `json:"success" example:"false"`
+	Error   string `json:"error" example:"unexpected end of JSON input"`
+}
+
+// InvalidUUIDError represents invalid UUID format error
+type InvalidUUIDError struct {
+	Success bool   `json:"success" example:"false"`
+	Error   string `json:"error" example:"invalid UUID length: 10"`
+}
+
+// NotFoundError represents a 404 error
+type NotFoundError struct {
+	Success bool   `json:"success" example:"false"`
+	Error   string `json:"error" example:"resource not found"`
+}
+
+// ConflictError represents a 409 error
+type ConflictError struct {
+	Success bool   `json:"success" example:"false"`
+	Error   string `json:"error" example:"resource already exists"`
+}
+
+// InternalServerError represents a 500 error
+type InternalServerError struct {
+	Success bool   `json:"success" example:"false"`
+	Error   string `json:"error" example:"internal server error"`
+}
+
+// SuccessResponse represents a success response with message
+type SuccessResponse struct {
+	Success bool   `json:"success" example:"true"`
+	Message string `json:"message" example:"operation completed successfully"`
+}
+
+// HealthResponse represents a health check response
+type HealthResponse struct {
+	Success bool                   `json:"success" example:"true"`
+	Data    map[string]interface{} `json:"data" swaggertype:"object,string" example:"{\"status\":\"ok\"}"`
+}
+
 // respondJSON sends a JSON response
 func respondJSON(w http.ResponseWriter, statusCode int, payload interface{}) {
 	w.Header().Set("Content-Type", "application/json")

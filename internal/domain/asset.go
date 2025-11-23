@@ -23,7 +23,7 @@ type Asset struct {
 	ID          uuid.UUID       `json:"id"`
 	Type        AssetType       `json:"type"`
 	Description string          `json:"description"`
-	Data        json.RawMessage `json:"data"` // Polymorphic data field
+	Data        json.RawMessage `json:"data" swaggertype:"object,string" example:"{\"title\":\"Sample Chart\"}"` // Polymorphic data field
 	CreatedAt   time.Time       `json:"created_at"`
 	UpdatedAt   time.Time       `json:"updated_at"`
 }
