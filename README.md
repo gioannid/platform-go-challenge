@@ -27,12 +27,76 @@ It is appreciated, though not required, if a Dockerfile is included.
 - **Production Patterns**: Health checks, rate limiting etc. middleware ***(TODO)***
 - **Extensible Storage**: Easy swap between in-memory and alternative data stores, in order to enable e.g. scalability across one single instance's resources.+
 - **Comprehensive Testing**: Unit and integration tests
-- **Docker Support**: Dockerfile and docker-compose included ***(TODO)***
+- **Docker Support**: Dockerfile and docker-compose included
 
 ## Installation and Usage
 
 ### Using Docker (Recommended)
-***(TODO)***
+
+To run the application using Docker, you'll need Docker Engine and Docker Compose installed on your system. Docker Desktop for Windows and macOS includes both.
+
+#### 1. Install Docker
+
+**For Windows & macOS:**
+Download and install Docker Desktop from the official Docker website:
+[https://www.docker.com/products/docker-desktop/](https://www.docker.com/products/docker-desktop/)
+
+**For Linux (Debian/Ubuntu):**
+Follow the official Docker Engine installation guide for Debian/Ubuntu:
+[https://docs.docker.com/engine/install/ubuntu/](https://docs.docker.com/engine/install/ubuntu/)
+
+Then install Docker Compose:
+```bash
+sudo apt update
+sudo apt install docker-compose-plugin
+```
+You can then run `docker compose` commands (note the space instead of a hyphen for the plugin).
+
+**For Linux (Fedora/CentOS/RHEL):**
+Follow the official Docker Engine installation guide for Fedora:
+[https://docs.docker.com/engine/install/fedora/](https://docs.docker.com/engine/install/fedora/)
+
+Then install Docker Compose:
+```bash
+sudo dnf install docker-compose-plugin
+```
+You can then run `docker compose` commands (note the space instead of a hyphen for the plugin).
+
+#### 2. Clone the Repository
+
+If you haven't already, clone the project repository and navigate into it:
+```bash
+git clone https://github.com/gioannid/platform-go-challenge.git
+cd platform-go-challenge
+```
+
+#### 3. Run the Application with Docker Compose
+
+From the root of the project directory, use Docker Compose to build the image and start the container:
+```bash
+docker compose up --build
+```
+The `--build` flag ensures that your Docker image is built from the `Dockerfile` before starting the service. On subsequent runs, if there are no changes to the `Dockerfile` or source code affecting the build stage, you can omit `--build`.
+
+The server will start, by default, on `http://localhost:8080`. You will see log messages indicating the server has started.
+
+**Example output:**
+```
+[+] Running 1/1
+ ✔ Container platform-go-challenge-server-1  Started
+Attaching to platform-go-challenge-server-1
+platform-go-challenge-server-1  | 2023/10/27 10:00:00 Starting server on :8080
+```
+
+You can now access the application's endpoints using a tool like `curl`, Postman or already included Swagger UI (see below). For example, to check the health endpoint:
+```bash
+curl http://localhost:8080/healthz
+```
+
+To stop the application and remove the container, press `Ctrl+C` in the terminal where `docker compose up` is running, or run:
+```bash
+docker compose down
+```
 
 ### Manual Installation
 
@@ -100,7 +164,7 @@ The server will start, by default, on `http://localhost:8080`. You will see a lo
 2023/10/27 10:00:00 Starting server on :8080
 ```
 
-You can now access the application's endpoints using a tool like `curl` or Postman. For example, to check the health endpoint:
+You can now access the application's endpoints using a tool like `curl`, Postman or already included Swagger UI (see below). For example, to check the health endpoint:
 ```bash
 curl http://localhost:8080/healthz
 ```

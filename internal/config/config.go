@@ -25,35 +25,36 @@ type Config struct {
 	AuthEnabled bool
 	JWTSecret   string
 
-	// Rate limiting
-	RateLimitRequests int
-	RateLimitWindow   time.Duration
+	// TODO: Rate limiting
+	//RateLimitRequests int
+	//RateLimitWindow   time.Duration
 
-	// Storage (for future database integration)
-	StorageType string // "memory" or e.g. "postgres"
-	DatabaseURL string
+	// TODO: Storage (for future database integration)
+	//StorageType string
+	//DatabaseURL string
 }
 
 // Load reads configuration from environment variables with sensible defaults
 func load() *Config {
 	return &Config{
-		ServerAddress:     getEnv("SERVER_ADDRESS", ":8080"),
-		ReadTimeout:       getDurationEnv("READ_TIMEOUT", 5*time.Second),
-		WriteTimeout:      getDurationEnv("WRITE_TIMEOUT", 10*time.Second),
-		IdleTimeout:       getDurationEnv("IDLE_TIMEOUT", 60*time.Second),
-		MaxPageItems:      getIntEnv("MAX_PAGE_ITEMS", 100),
-		RateLimitRequests: getIntEnv("RATE_LIMIT_REQUESTS", 100),
-		RateLimitWindow:   getDurationEnv("RATE_LIMIT_WINDOW", 1*time.Minute),
-		StorageType:       getEnv("STORAGE_TYPE", "memory"), // TODO currently ignored
-		DatabaseURL:       getEnv("DATABASE_URL", ""),       // Persistent storage not implemented yet
-		AuthEnabled:       getBoolEnv("AUTH_ENABLED", false),
+		ServerAddress: getEnv("SERVER_ADDRESS", ":8080"),
+		ReadTimeout:   getDurationEnv("READ_TIMEOUT", 5*time.Second),
+		WriteTimeout:  getDurationEnv("WRITE_TIMEOUT", 10*time.Second),
+		IdleTimeout:   getDurationEnv("IDLE_TIMEOUT", 60*time.Second),
+		MaxPageItems:  getIntEnv("MAX_PAGE_ITEMS", 100),
+		AuthEnabled:   getBoolEnv("AUTH_ENABLED", false),
 		// TODO dummy JWT_SECRET value for development; in production use a secure, random secret of at least 256 bits
 		// Below secret along with following data:
 		// {"user_id":"a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11","exp":1855920000}
 		// corresponds to HS256 JWT token (valid until 23rd Oct 2028):
 		// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiYTBlZWJjOTktOWMwYi00ZWY4LWJiNmQtNmJiOWJkMzgwYTExIiwiZXhwIjoxODU1OTIwMDAwfQ.2OG1_i188KTGnOYAN7RCNpCEzY-nmwdO5UdLTfHSWOU
-		// If AUTH_ENABLED, Use this token in all /api/v1 requests.
+		// If AUTH_ENABLED, use this token in all /api/v1 requests.
 		JWTSecret: getEnv("JWT_SECRET", "a-string-secret-at-least-256-bits-long"),
+		// Following parameters are TODO and not yet implemented
+		//StorageType:       getEnv("STORAGE_TYPE", "memory"),
+		//DatabaseURL:   getEnv("DATABASE_URL", ""),
+		//RateLimitRequests: getIntEnv("RATE_LIMIT_REQUESTS", 100),
+		//RateLimitWindow:   getDurationEnv("RATE_LIMIT_WINDOW", 1*time.Minute),
 	}
 }
 
