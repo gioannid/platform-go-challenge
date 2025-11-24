@@ -21,11 +21,11 @@ It is appreciated, though not required, if a Dockerfile is included.
 ## Features
 
 - **Clean Architecture**: Layered design (domain, repository, service, handler)
-- **Thread-Safe In-Memory Storage**: Concurrent-safe with `sync.RWMutex`
+- **Thread-Safe In-Memory Storage**: Performance and scalability characteristics are described in detail in https://github.com/gioannid/platform-go-challenge/blob/main/internal/repository/memory/memory.go
 - **Optional JWT Authentication**: Enable/disable via environment variable
 - **Pagination & Sorting**: Efficient handling of large datasets
 - **Production Patterns**: Health checks, rate limiting etc. middleware ***(TODO)***
-- **Extensible Storage**: Easy swap between in-memory and ***(TODO) persisted database***
+- **Extensible Storage**: Easy swap between in-memory and alternative data stores, in order to enable e.g. scalability across one single instance's resources.+
 - **Comprehensive Testing**: Unit and integration tests
 - **Docker Support**: Dockerfile and docker-compose included ***(TODO)***
 

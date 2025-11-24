@@ -1,4 +1,21 @@
-// Package memory provides an in-memory implementation of the repository interfaces.
+// Package memory is an in-memory implementation of the repository interface, limited by the physical memory available
+// of the running instance (node or container). This implementation provides:
+//   - For individual Get, Add, Update, Remove operations on assets, on average O(1) time complexity.
+//     In the worst-case scenario (key hash collisions) operations could degrade to O(N),
+//     but this should be rare as well-randomized uuid.UUID keys are used.
+//   - For AddFavourite and RemoveFavourite operations, average O(M) time complexity where M is the number of favourites
+//     for a user, due to the need to check for existing favourites before adding/removing. An additional index that would
+//     map (userID, assetID) to favouriteID could reduce this to O(1) at the cost of increased memory usage.
+//   - For IsFavourite operations, average O(M) time complexity where M is the number of favourites for a user,
+//     as it requires scanning the user's favourites. An additional index mapping (userID, assetID) to favouriteID
+//     could reduce this to O(1) but would increase memory usage.
+//   - For List operations (ListAssets, ListFavourites), a dominant time complexity of O(N log N) due to sorting.
+//     Pagination is applied after sorting, which is O(1), so N refers to the total number of items before pagination.
+//   - For DeleteAsset operations, a quite poor O(U * <F>) time complexity where U is the number of users and
+//     <F> is the average number of favourites per user, since it requires scanning all users' favourites to remove hanging
+//     references to the deleted asset. Depending on how rare (or needed at all) asset deletions are, this may be acceptable.
+//   - Thread syncrhonization via sync.RWMutex allowing concurrent read but serializing write operations. This is generally
+//     a good approach for in-memory stores. However, under high write contention, the mutex itself can also become a bottleneck.
 package memory
 
 import (
